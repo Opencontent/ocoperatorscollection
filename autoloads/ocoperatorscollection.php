@@ -12,7 +12,8 @@ class OCOperatorsCollection
         'oc_shorten',
         'cookieset', 'cookieget', 'check_and_set_cookies',
         'checkbrowser', 'is_deprecated_browser',
-        'slugize'
+        'slugize',
+        'to_query_string'
     );
     
     function OCOperatorsCollection()
@@ -60,6 +61,9 @@ class OCOperatorsCollection
             ),
             'slugize' => array(
                 'first_param' => array( 'type' => 'string', 'required' => false, 'default' => 'string to operator slugize not found' )
+            ),
+            'to_query_string' => array(
+                'param' => array( 'type' => 'array', 'required' => false, 'default' => array() )
             )
         );
     }
@@ -90,6 +94,16 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {
+            case 'to_query_string':
+            {                
+                if ( !empty( $namedParameters['param'] ) )
+                    $value = $namedParameters['param'];
+                else
+                    $value = $operatorValue;
+                $string = http_build_query( $value );
+                return $operatorValue = $string;
+            } break;
+            
             case 'has_abstract':
             case 'abstract':
             {

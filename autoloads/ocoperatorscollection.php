@@ -176,8 +176,15 @@ class OCOperatorsCollection
             
             case 'subsite':
             {
-                $result = eZContentObjectTreeNode::fetch( eZINI::instance( 'content.ini' )->variable( 'NodeSettings', 'RootNode' ) );;
+                $result = false;
                 $identifiers = $ini->hasVariable( 'Subsite', 'Classes' ) ? $ini->variable( 'Subsite', 'Classes' ) : array();
+                
+                $root = eZContentObjectTreeNode::fetch( eZINI::instance( 'content.ini' )->variable( 'NodeSettings', 'RootNode' ) );
+                if ( in_array( $root->attribute( 'class_identifier' ), $identifiers ) )
+                {
+                    $result = $node;
+                }
+                
                 foreach ( $path as $key => $item )
                 {
                     if ( isset( $item['node_id'] ) )

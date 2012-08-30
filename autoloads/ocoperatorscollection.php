@@ -232,6 +232,13 @@ class OCOperatorsCollection
             
             case 'oc_shorten':
             {
+                $search = array(
+                                '@<script[^>]*?>.*?</script>@si',  // Strip out javascript
+                                '@<style[^>]*?>.*?</style>@siU',    // Strip style tags properly
+                                '@<![\s\S]*?--[ \t\n\r]*>@'         // Strip multi-line comments including CDATA
+                                );
+                $operatorValue = preg_replace( $search, '', $operatorValue );
+                
                 $operatorValue = strip_tags( $operatorValue, $namedParameters['allowable_tags'] );
                 $operatorValue = preg_replace( '!\s+!', ' ', $operatorValue );
                 $operatorValue = str_replace( '&nbsp;', ' ', $operatorValue );

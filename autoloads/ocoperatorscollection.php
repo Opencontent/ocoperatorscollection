@@ -234,8 +234,7 @@ class OCOperatorsCollection
             {
                 $search = array(
                                 '@<script[^>]*?>.*?</script>@si',  // Strip out javascript
-                                '@<style[^>]*?>.*?</style>@siU',    // Strip style tags properly
-                                '@<![\s\S]*?--[ \t\n\r]*>@'         // Strip multi-line comments including CDATA
+                                '@<style[^>]*?>.*?</style>@siU'   // Strip style tags properly
                                 );
                 $operatorValue = preg_replace( $search, '', $operatorValue );
                 
@@ -279,7 +278,7 @@ class OCOperatorsCollection
                 
                 if ( $namedParameters['allowable_tags'] !== '' )
                 {
-                    $operatorValue = $this->force_balance_tags( $operatorValue );
+                    $operatorValue = $this->force_balance_tags( $operatorValue );                    
                 }
 
 
@@ -347,10 +346,15 @@ class OCOperatorsCollection
             
             case 'checkbrowser':
             {
-				if ( function_exists( 'browser_detection' ) )
+				@require( 'extension/ocoperatorscollection/lib/browser_detection.php' );
+                if ( function_exists( 'browser_detection' ) )
                 {
                     $full = browser_detection( 'full_assoc', 2 );
                     $operatorValue = $full;
+                }
+                else
+                {
+                    eZDebug::writeError( "function browser_detection not found", __METHOD__ );
                 }
             } break;
             
@@ -696,7 +700,7 @@ class OCOperatorsCollection
         $text = str_replace('< !--', '<    !--', $text);
         // WP bug fix for LOVE <3 (and other situations with '<' before a number)
         $text = preg_replace('#<([0-9]{1})#', '&lt;$1', $text);
-    
+
         while ( preg_match("/<(\/?[\w:]*)\s*([^>]*)>/", $text, $regex) ) {
             $newtext .= $tagqueue;
     

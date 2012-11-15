@@ -17,9 +17,9 @@ class eZRedirectSubisteType extends eZWorkflowEventType
         $userID = $parameterList['user_id'];
         $languageCode = $parameterList['language_code'];
         
-        $ini = eZINI::instance( 'ocoperatorscollection.ini' );
+        $ini = eZINI::instance( 'ocoperatorscollection.ini' );        
         foreach( $ini->variable( 'Redirect', 'ExcludeReferers' ) as $exclude )
-        {
+        {            
             if ( isset( $_SERVER['HTTP_REFERER'] ) && strpos( $_SERVER['HTTP_REFERER'], $exclude ) !== false )
             {
                 return eZWorkflowType::STATUS_ACCEPTED;
@@ -31,7 +31,10 @@ class eZRedirectSubisteType extends eZWorkflowEventType
         {
             return eZWorkflowType::STATUS_ACCEPTED;
         }
-                
+        
+        $http = eZHTTPTool::instance();
+        $http->setSessionVariable( "RedirectAfterLogin", 'content/view/full/' . $nodeID );
+        
         $identifiers = $ini->hasVariable( 'Subsite', 'Classes' ) ? $ini->variable( 'Subsite', 'Classes' ) : array();
         
         if ( in_array( $node->attribute( 'class_identifier' ), $identifiers ) )

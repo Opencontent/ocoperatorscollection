@@ -13,7 +13,8 @@ class OCOperatorsCollection
         'cookieset', 'cookieget', 'check_and_set_cookies',
         'checkbrowser', 'is_deprecated_browser',
         'slugize',
-        'to_query_string'
+        'to_query_string',
+        'sort_nodes'
     );
     
     function OCOperatorsCollection()
@@ -64,6 +65,10 @@ class OCOperatorsCollection
             ),
             'to_query_string' => array(
                 'param' => array( 'type' => 'array', 'required' => false, 'default' => array() )
+            ),
+            'sort_nodes' => array(
+                'by' => array( 'type' => 'string', 'required' => false, 'default' => 'published' ),
+                'order' => array( 'type' => 'string', 'required' => false, 'default' => 'desc' )
             )
         );
     }
@@ -94,6 +99,41 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {
+            case 'sort_nodes':
+            {                
+                $sortNodes = array();
+                if ( !empty( $operatorValue ) && is_array( $operatorValue ) )
+                {
+                    $nodes = $operatorValue;
+                    foreach( $nodes as $node )
+                    {
+                        if ( !$node instanceof eZContentObjectTreeNode )
+                        {
+                            continue;
+                        }
+                        
+                        $object = $node->object();
+                        switch ( $namedParameters['by'] )
+                        {
+                            case 'published':
+                            default :
+                            {
+                                $sortby = $object->attribute( 'published' );
+                            } break;
+                        }
+                        $sortNodes[$sortby] = $node;
+                    }
+                    ksort( $sortNodes );
+                    
+                    if ( $namedParameters['order'] == 'desc' )
+                    {
+                        $sortNodes = array_reverse( $sortNodes );
+                    }
+                }
+                
+                return $operatorValue = $sortNodes;
+            } break;
+            
             case 'to_query_string':
             {                
                 if ( !empty( $namedParameters['param'] ) )
@@ -182,7 +222,7 @@ class OCOperatorsCollection
                 $root = eZContentObjectTreeNode::fetch( eZINI::instance( 'content.ini' )->variable( 'NodeSettings', 'RootNode' ) );
                 if ( in_array( $root->attribute( 'class_identifier' ), $identifiers ) )
                 {
-                    $result = $node;
+                    $result = $root;
                 }
                 
                 foreach ( $path as $key => $item )

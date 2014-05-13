@@ -14,7 +14,12 @@ class OCOperatorsCollection
         'checkbrowser', 'is_deprecated_browser',
         'slugize',
         'to_query_string',
-        'sort_nodes'
+        'sort_nodes',
+        'is_in_subsite',
+        'appini',
+        'include_cache',
+        'set_defaults',
+        'has_attribute', 'attribute'
     );
     
     function OCOperatorsCollection()
@@ -69,36 +74,89 @@ class OCOperatorsCollection
             'sort_nodes' => array(
                 'by' => array( 'type' => 'string', 'required' => false, 'default' => 'published' ),
                 'order' => array( 'type' => 'string', 'required' => false, 'default' => 'desc' )
+            ),
+            'appini' => array(
+                'block' 	    => array( 'type' 	=> 'string',	'required' => true ),
+                'setting' 	    => array( 'type'	=> 'string', 	'required' => true ),
+                'default' 	    => array( 'type'    => 'mixed', 	'required' => false,    'default' => false )
+            ),
+            'include_cache' => array(
+                'template' 	    => array( 'type' 	=> 'string',	'required' => true ),
+                'variables'	    => array( 'type'	=> 'array', 	'required' => false,    'default' => array() ),
+                'cache_keys'    => array( 'type'    => 'array', 	'required' => false,    'default' => false )
+            ),
+            'set_defaults' => array(
+                'variables'	    => array( 'type'	=> 'array', 	'required' => true )
+            ),
+            'has_attribute' => array(
+                'identifier'    => array( 'type'	=> 'string', 	'required' => true )
+            ),
+            'attribute' => array(
+                'identifier'    => array( 'type'	=> 'string', 	'required' => true )
             )
         );
     }
     
     function modify( &$tpl, &$operatorName, &$operatorParameters, &$rootNamespace, &$currentNamespace, &$operatorValue, &$namedParameters )
     {		
-        if ( $tpl->hasVariable('module_result') )
-        {
-           $moduleResult = $tpl->variable('module_result');
-        }
-        else
-        {
-            $moduleResult = array();
-        }
-        
-        $viewmode = false;
-        if ( isset( $moduleResult['content_info'] ) )
-        {
-            if ( isset( $moduleResult['content_info']['viewmode'] ) )
-            {
-                $viewmode = $moduleResult['content_info']['viewmode'];
-            }
-        }
-                
-        $path = ( isset( $moduleResult['path'] ) && is_array( $moduleResult['path'] ) ) ? $moduleResult['path'] : array();
-
         $ini = eZINI::instance( 'ocoperatorscollection.ini' );
+        $appini = eZINI::instance( 'app.ini' );
 
         switch ( $operatorName )
         {
+            case 'appini':
+            {
+                if ( $appini->hasVariable( $namedParameters['block'], $namedParameters['setting'] ) )
+                {
+                    $rs = $appini->variable( $namedParameters['block'], $namedParameters['setting'] );
+                }
+                else
+                {
+                    $rs = $namedParameters['default'];
+                }
+                $operatorValue = $rs;
+            } break;
+            
+            case 'has_attribute':
+            case 'attribute':
+            {                                
+                if ( $operatorValue instanceof eZContentObjectTreeNode || $operatorValue instanceof eZContentObject )
+                {
+                    $dataMap = $operatorValue->attribute( 'data_map' );
+                    if ( isset( $dataMap[$namedParameters['identifier']] ) )
+                    {
+                        if ( $dataMap[$namedParameters['identifier']] instanceof eZContentObjectAttribute &&
+                             $dataMap[$namedParameters['identifier']]->attribute( 'has_content' ) )
+                        {
+                            return $operatorValue = $dataMap[$namedParameters['identifier']];
+                        }
+                    }
+                }
+                return $operatorValue = false;
+            } break;
+            
+            case 'set_defaults':
+            {                                
+                foreach( $namedParameters['variables'] as $key => $value )
+                {
+                    if ( !$tpl->hasVariable( $key ) )
+                    {
+                        $tpl->setVariable( $key, $value );
+                    }
+                }                
+            } break;
+            
+            //@todo add cache!
+            case 'include_cache':
+            {
+                $tpl = eZTemplate::factory();
+                foreach( $namedParameters['variables'] as $key => $value )
+                {
+                    $tpl->setVariable( $key, $value );
+                }
+                $operatorValue = $tpl->fetch( 'design:' . $namedParameters['template'] );;
+            } break;
+            
             case 'sort_nodes':
             {                
                 $sortNodes = array();
@@ -216,6 +274,7 @@ class OCOperatorsCollection
             
             case 'subsite':
             {
+                $path = $this->getPath( $tpl );
                 $result = false;
                 $identifiers = $ini->hasVariable( 'Subsite', 'Classes' ) ? $ini->variable( 'Subsite', 'Classes' ) : array();
                 
@@ -244,6 +303,7 @@ class OCOperatorsCollection
             
             case 'section_color':
             {
+                $path = $this->getPath( $tpl );
                 $color = false;
                 $attributesIdentifiers = $ini->hasVariable( 'Color', 'Attributes' ) ? $ini->variable( 'Color', 'Attributes' ) : array();
                 foreach ( $path as $key => $item )
@@ -414,7 +474,93 @@ class OCOperatorsCollection
                 $operatorValue = $this->sanitize_title_with_dashes( $operatorValue );
             } break;
             
+            case 'is_in_subsite':
+            {
+                if ( $operatorValue instanceof eZContentObject )
+                {
+                    $nodes = $operatorValue->attribute( 'assigned_nodes' );
+                    foreach( $nodes as $node )
+                    {
+                        if ( $this->isNodeInCurrentSiteaccess( $node ) )
+                        {
+                            return $operatorValue;
+                        }
+                    }
+                }
+                elseif( $operatorValue instanceof eZContentObjectTreeNode )
+                {
+                    if ( $this->isNodeInCurrentSiteaccess( $operatorValue ) )
+                    {
+                        return $operatorValue;
+                    }
+                }
+                return $operatorValue = false;
+            }
+            
         }
+    }
+    
+    private function getPath( $tpl )
+    {
+        if ( $tpl->hasVariable('module_result') )
+        {
+           $moduleResult = $tpl->variable('module_result');
+        }
+        else
+        {
+            $moduleResult = array();
+        }
+        
+        $viewmode = false;
+        if ( isset( $moduleResult['content_info'] ) )
+        {
+            if ( isset( $moduleResult['content_info']['viewmode'] ) )
+            {
+                $viewmode = $moduleResult['content_info']['viewmode'];
+            }
+        }
+                
+        return ( isset( $moduleResult['path'] ) && is_array( $moduleResult['path'] ) ) ? $moduleResult['path'] : array();
+    }
+    
+    private function isNodeInCurrentSiteaccess( $node )
+    {
+        if ( !$node instanceof eZContentObjectTreeNode )
+        {
+            return true;
+        }
+        $currentSiteaccess = eZSiteAccess::current();
+        $pathPrefixExclude = eZINI::instance()->variable( 'SiteAccessSettings', 'PathPrefixExclude' );
+        $aliasArray = explode( '/', $node->attribute( 'url_alias' ) );
+        
+        //eZDebug::writeError( var_export($aliasArray,1), __METHOD__ );
+        //eZDebug::writeError( $pathPrefixExclude, __METHOD__ );
+        
+        foreach( $pathPrefixExclude as $ppe )
+        {
+            if ( strtolower( $aliasArray[0] ) == $ppe )
+            {
+                return true;
+            }
+        }
+        
+        $pathArray = $node->attribute( 'path_array' );
+        $contentIni = eZINI::instance( 'content.ini' );
+        $rootNodeArray = array(
+            'RootNode',
+            'UserRootNode',
+            'MediaRootNode'                
+        );
+        
+        foreach ( $rootNodeArray as $rootNodeID )
+        {
+            $rootNode = $contentIni->variable( 'NodeSettings', $rootNodeID );
+            if ( in_array( $rootNode, $pathArray ) ) {
+                return true;
+            }
+        }
+        eZDebug::writeError( 'Il nodo ' . $node->attribute( 'name' ) . ' non si trova nel Siteaccess ' . $currentSiteaccess , __METHOD__ );
+        return false;
     }
     
     private function custom_substr( $string, $start, $length )

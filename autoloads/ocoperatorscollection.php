@@ -17,9 +17,11 @@ class OCOperatorsCollection
         'sort_nodes',
         'is_in_subsite',
         'appini',
-        'include_cache',
+        'include_cache', // @dev @todo non utilizzare
         'set_defaults',
-        'has_attribute', 'attribute'
+        'has_attribute', 'attribute',
+        'editor_warning',
+        'developer_warning'     
     );
     
     function OCOperatorsCollection()
@@ -89,11 +91,19 @@ class OCOperatorsCollection
                 'variables'	    => array( 'type'	=> 'array', 	'required' => true )
             ),
             'has_attribute' => array(
-                'identifier'    => array( 'type'	=> 'string', 	'required' => true )
+                'show_values'    => array( 'type'	=> 'string', 	'required' => true )
             ),
             'attribute' => array(
-                'identifier'    => array( 'type'	=> 'string', 	'required' => true )
-            )
+                "show_values" => array( "type" => "string", "required" => false, "default" => "" ),
+                "max_val" => array( "type" => "numerical", "required" => false, "default" => 2 ),
+                "format" => array( "type" => "string", "required" => false, "default" => eZINI::instance( 'template.ini' )->variable( 'AttributeOperator', 'DefaultFormatter' ) )
+            ),
+            'editor_warning' => array(
+                'text'    => array( 'type'	=> 'string', 	'required' => true )
+            ),
+            'developer_warning' => array(
+                'text'    => array( 'type'	=> 'string', 	'required' => true )
+            )            
         );
     }
     
@@ -104,6 +114,29 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {
+            case 'developer_warning':
+            {
+                $res = false;
+                $user = eZUser::currentUser();
+                if ( $user->attribute( 'login' ) == 'admin' )
+                {
+                    $data = array_pop( $tpl->templateFetchList() );                    
+                    $res = '<div class="developer-warning alert alert-danger"><strong>Avviso per lo sviluppatore</strong>:<br /><code>' . $data . '</code><br />' . $namedParameters['text'] . '</div>';
+                }
+                $operatorValue = $res;
+            } break; 
+            
+            case 'editor_warning':
+            {
+                $res = false;
+                $user = eZUser::currentUser();
+                if ( $user->hasAccessTo( 'content', 'dashboard' ) )
+                {
+                    $res = '<div class="editor-warning alert alert-warning"><strong>Avviso per l\'editor</strong>: ' . $namedParameters['text'] . '</div>';
+                }
+                $operatorValue = $res;
+            } break;
+            
             case 'appini':
             {
                 if ( $appini->hasVariable( $namedParameters['block'], $namedParameters['setting'] ) )
@@ -120,19 +153,12 @@ class OCOperatorsCollection
             case 'has_attribute':
             case 'attribute':
             {                                
-                if ( $operatorValue instanceof eZContentObjectTreeNode || $operatorValue instanceof eZContentObject )
+                if ( $operatorName == 'attribute' && $namedParameters['show_values'] == 'show' )
                 {
-                    $dataMap = $operatorValue->attribute( 'data_map' );
-                    if ( isset( $dataMap[$namedParameters['identifier']] ) )
-                    {
-                        if ( $dataMap[$namedParameters['identifier']] instanceof eZContentObjectAttribute &&
-                             $dataMap[$namedParameters['identifier']]->attribute( 'has_content' ) )
-                        {
-                            return $operatorValue = $dataMap[$namedParameters['identifier']];
-                        }
-                    }
+                    $legacy = new eZTemplateAttributeOperator();
+                    return $legacy->modify( $tpl, $operatorName, $operatorParameters, $rootNamespace, $currentNamespace, $operatorValue, $namedParameters );
                 }
-                return $operatorValue = false;
+                return $operatorValue = $this->hasContentObjectAttribute( $operatorValue, $namedParameters['show_values'] );                
             } break;
             
             case 'set_defaults':
@@ -498,6 +524,53 @@ class OCOperatorsCollection
             }
             
         }
+    }
+    
+    public function hasContentObjectAttribute( $object, $identifier )
+    {
+        if ( $object instanceof eZContentObjectTreeNode || $object instanceof eZContentObject )
+        {
+            $dataMap = $object->attribute( 'data_map' );
+            if ( isset( $dataMap[$identifier] ) )
+            {
+                if ( $dataMap[$identifier] instanceof eZContentObjectAttribute )
+                {
+                    
+                    //eZDebug::writeError( $object->attribute( 'class_identifier' ) . ' ' . $dataMap[$identifier]->attribute( 'data_type_string' ) . ' ' . $identifier, __METHOD__ );
+                    
+                    if ( $identifier == 'image' &&
+                         $dataMap[$identifier]->attribute( 'data_type_string' ) == 'ezobjectrelationlist' &&
+                         $dataMap[$identifier]->attribute( 'has_content' ) )
+                    {
+                        $content = explode( '-', $dataMap[$identifier]->toString() );                        
+                        $firstImage = array_shift( $content );
+                        $imageObject = eZContentObject::fetch( $firstImage );
+                        return $this->hasContentObjectAttribute( $imageObject, 'image' );
+                    }
+                    
+                    if ( $identifier == 'image' &&
+                         $dataMap[$identifier]->attribute( 'data_type_string' ) == 'ezobjectrelation' &&
+                         $dataMap[$identifier]->attribute( 'has_content' ) )
+                    {                        
+                        $imageObject = $dataMap[$identifier]->content();                        
+                        return $this->hasContentObjectAttribute( $imageObject, 'image' );
+                    }
+                    
+                    switch( $dataMap[$identifier]->attribute( 'data_type_string' ) )
+                    {
+                        case 'ezcomcomments':
+                            return $dataMap[$identifier];
+                        break;
+                    default:
+                        if ( $dataMap[$identifier]->attribute( 'has_content' ) )
+                        {
+                            return $dataMap[$identifier];
+                        }
+                    }
+                }                        
+            }
+        }
+        return false;
     }
     
     private function getPath( $tpl )

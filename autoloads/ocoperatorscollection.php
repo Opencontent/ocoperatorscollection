@@ -156,7 +156,7 @@ class OCOperatorsCollection
                 if ( $operatorName == 'attribute' && $namedParameters['show_values'] == 'show' )
                 {
                     $legacy = new eZTemplateAttributeOperator();
-                    return $legacy->modify( $tpl, $operatorName, $operatorParameters, $rootNamespace, $currentNamespace, $operatorValue, $namedParameters );
+                    return $legacy->modify( $tpl, $operatorName, $operatorParameters, $rootNamespace, $currentNamespace, $operatorValue, $namedParameters, null );
                 }
                 return $operatorValue = $this->hasContentObjectAttribute( $operatorValue, $namedParameters['show_values'] );                
             } break;

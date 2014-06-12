@@ -120,7 +120,8 @@ class OCOperatorsCollection
                 $user = eZUser::currentUser();
                 if ( $user->attribute( 'login' ) == 'admin' )
                 {
-                    $data = array_pop( $tpl->templateFetchList() );                    
+                    $templates = $tpl->templateFetchList();
+                    $data = array_pop( $templates );                    
                     $res = '<div class="developer-warning alert alert-danger"><strong>Avviso per lo sviluppatore</strong>:<br /><code>' . $data . '</code><br />' . $namedParameters['text'] . '</div>';
                 }
                 $operatorValue = $res;
@@ -156,18 +157,18 @@ class OCOperatorsCollection
                 if ( $operatorName == 'attribute' && $namedParameters['show_values'] == 'show' )
                 {
                     $legacy = new eZTemplateAttributeOperator();
-                    return $legacy->modify( $tpl, $operatorName, $operatorParameters, $rootNamespace, $currentNamespace, $operatorValue, $namedParameters );
+                    return $legacy->modify( $tpl, $operatorName, $operatorParameters, $rootNamespace, $currentNamespace, $operatorValue, $namedParameters, null );
                 }
                 return $operatorValue = $this->hasContentObjectAttribute( $operatorValue, $namedParameters['show_values'] );                
             } break;
             
             case 'set_defaults':
-            {                                
+            {                                                
                 foreach( $namedParameters['variables'] as $key => $value )
                 {
-                    if ( !$tpl->hasVariable( $key ) )
+                    if ( !$tpl->hasVariable( $key, $rootNamespace ) )
                     {
-                        $tpl->setVariable( $key, $value );
+                        $tpl->setVariable( $key, $value, $rootNamespace );
                     }
                 }                
             } break;

@@ -3,5 +3,6 @@
 [ModuleSettings]
 ExtensionRepositories[]=ocoperatorscollection
 ModuleList[]=subsite
+ModuleList[]=addlocation
 
 */ ?>

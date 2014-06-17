@@ -4,5 +4,4 @@
 ExtensionAutoloadPath[]=ocoperatorscollection
 
 
-
 */ ?>

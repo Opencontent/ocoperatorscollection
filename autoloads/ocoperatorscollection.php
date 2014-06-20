@@ -6,7 +6,7 @@ class OCOperatorsCollection
     private $area_tematica_node = array();
     
     static $Operators = array(
-        'subsite', 'is_in_subsite',
+        'subsite',
         'section_color',
         'has_abstract', 'abstract',
         'oc_shorten',
@@ -14,13 +14,14 @@ class OCOperatorsCollection
         'checkbrowser', 'is_deprecated_browser',
         'slugize',
         'to_query_string',
-        'sort_nodes',        
+        'sort_nodes',
+        'is_in_subsite',
         'appini',
         'include_cache', // @dev @todo non utilizzare
         'set_defaults',
         'has_attribute', 'attribute',
-        'editor_warning', 'developer_warning',
-        'can_add_to_newsletter', 'newsletter_edition_hash',
+        'editor_warning',
+        'developer_warning'     
     );
     
     function OCOperatorsCollection()
@@ -113,52 +114,6 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {
-            case 'can_add_to_newsletter':
-            {
-                $fetchParams = array( 'ClassFilterType' => 'include',
-                                      'ClassFilterArray' => array( 'cjw_newsletter_edition' ),
-                                      'LoadDataMap' => false,
-                                      'ExtendedAttributeFilter' => array( 'id' => 'CjwNewsletterEditionFilter',
-                                                                          'params' => array( 'status' => 'draft' ) ) );               
-                $canAdd = false;
-                $currentNode = $operatorValue;
-                
-                if ( $currentNode instanceof eZContentObjectTreeNode )
-                {
-                    $user = eZUser::currentUser();
-                    $result = $user->hasAccessTo( 'newsletter', 'index' );
-                    $checkAccess = $result['accessWord'] != 'no';
-                    
-                    $editionDraftCount = eZContentObjectTreeNode::subTreeCountByNodeID( $fetchParams,
-                                                                                        eZINI::instance( 'cjw_newsletter.ini' )->variable( 'NewsletterSettings', 'RootFolderNodeId' ) );
-                    
-                    $classAllowed = in_array( $currentNode->attribute( 'class_identifier' ), self::$allowedClasses );
-                    
-                    $canAdd = $checkAccess && $editionDraftCount > 0 && $classAllowed;
-                }
-                
-                $operatorValue = $canAdd;
-            } break;
-            
-            case 'newsletter_edition_hash':
-            {
-                $fetchParams = array( 'ClassFilterType' => 'include',
-                                      'ClassFilterArray' => array( 'cjw_newsletter_edition' ),
-                                      'LoadDataMap' => false,
-                                      'ExtendedAttributeFilter' => array( 'id' => 'CjwNewsletterEditionFilter',
-                                                                          'params' => array( 'status' => 'draft' ) ) );
-                $editionDraftNodeList = eZContentObjectTreeNode::subTreeByNodeID( $fetchParams,
-                                                                                  eZINI::instance( 'cjw_newsletter.ini' )->variable( 'NewsletterSettings', 'RootFolderNodeId' ) );
-                
-                $selectHash = array();
-                foreach( $editionDraftNodeList as $edition )
-                {
-                    $selectHash[$edition->attribute( 'node_id' )] = $edition->attribute( 'parent' )->attribute( 'name' ) . ' ' . $edition->attribute( 'name' );
-                }
-                
-                $operatorValue = $selectHash;
-            } break;
-            
             case 'developer_warning':
             {
                 $res = false;

@@ -428,7 +428,7 @@ class OCOperatorsCollection
                     return $operatorValue = $result;
                 }
 
-                foreach ( $node->attribute( 'path' ) as $key => $item )
+                foreach ( $node->attribute( 'path' ) as $item )
                 {
                     if ( in_array( $item->attribute( 'class_identifier' ), $identifiers ) )
                     {
@@ -442,8 +442,9 @@ class OCOperatorsCollection
             } break;
 
             case 'is_subsite':
-            {                
+            {
                 $identifiers = $ini->hasVariable( 'Subsite', 'Classes' ) ? $ini->variable( 'Subsite', 'Classes' ) : array();
+                $inSubsite = false;
                 $node = $operatorValue;
                 if ( is_numeric( $node ) )
                 {
@@ -451,12 +452,13 @@ class OCOperatorsCollection
                 }
                 if ( !$node instanceof eZContentObjectTreeNode )
                 {
-                    return $operatorValue = false;
+                    $inSubsite = false;
                 }
                 elseif ( in_array( $node->attribute( 'class_identifier' ), $identifiers ) )
                 {
-                    return $operatorValue = true;
+                    $inSubsite = true;
                 }
+                return $operatorValue = $inSubsite;
             } break;
 
             case 'is_in_subsite':

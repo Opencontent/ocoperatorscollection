@@ -412,7 +412,6 @@ class OCOperatorsCollection
             {
                 $result = false;
                 $identifiers = $ini->hasVariable( 'Subsite', 'Classes' ) ? $ini->variable( 'Subsite', 'Classes' ) : array();
-
                 $root = eZContentObjectTreeNode::fetch( eZINI::instance( 'content.ini' )->variable( 'NodeSettings', 'RootNode' ) );
                 if ( in_array( $root->attribute( 'class_identifier' ), $identifiers ) )
                 {
@@ -443,21 +442,18 @@ class OCOperatorsCollection
             } break;
 
             case 'is_subsite':
-            {
-                $result = false;
+            {                
                 $identifiers = $ini->hasVariable( 'Subsite', 'Classes' ) ? $ini->variable( 'Subsite', 'Classes' ) : array();
-
                 $node = $operatorValue;
                 if ( is_numeric( $node ) )
                 {
                     $node = eZContentObjectTreeNode::fetch( $node );
                 }
-                if ( !$node )
+                if ( !$node instanceof eZContentObjectTreeNode )
                 {
-                    return $operatorValue = $result;
+                    return $operatorValue = false;
                 }
-
-                if ( in_array( $node->attribute( 'class_identifier' ), $identifiers ) )
+                elseif ( in_array( $node->attribute( 'class_identifier' ), $identifiers ) )
                 {
                     return $operatorValue = true;
                 }

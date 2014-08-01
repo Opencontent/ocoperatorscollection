@@ -21,7 +21,11 @@ class OCOperatorsCollection
         'set_defaults',
         'has_attribute', 'attribute',
         'editor_warning',
-        'developer_warning'
+        'developer_warning',
+        'multiupload_file_types_string_from_attribute',
+        'multiupload_file_types_string',
+        'session_id', 'session_name', 'user_session_hash',
+        'browse_template',        
     );
 
     function OCOperatorsCollection()
@@ -131,6 +135,69 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {
+            case 'browse_template':
+            {
+
+                if ( $operatorValue instanceof eZContentBrowse
+                    && $operatorValue->hasAttribute( 'type' ) && $operatorValue->attribute( 'type' ) == 'AddRelatedObjectListToDataType'
+                    && $operatorValue->hasAttribute( 'action_name' ) )
+                {
+                    $currentAttributeId = str_replace( 'AddRelatedObject_', '', $operatorValue->attribute('action_name' ) );
+                    $currentAttribute = eZPersistentObject::fetchObject( eZContentObjectAttribute::definition(), null, array( "id" => $currentAttributeId ), false );
+                    if ( isset( $currentAttribute['contentclassattribute_id'] ) )
+                    {
+                        $contentClassAttribute = eZContentClassAttribute::fetch( $currentAttribute['contentclassattribute_id'] );
+                        if ( $contentClassAttribute instanceof eZContentClassAttribute
+                             && ( $contentClassAttribute->attribute( 'data_type_string' ) == 'mugoobjectrelationlist'
+                                  || $contentClassAttribute->attribute( 'data_type_string' ) == 'ezobjectrelationlist' )
+                             && ( $contentClassAttribute->attribute( 'identifier' ) == 'image'
+                                  || $contentClassAttribute->attribute( 'identifier' ) == 'image2'
+                                  || $contentClassAttribute->attribute( 'identifier' ) == 'galleria'
+                                  || $contentClassAttribute->attribute( 'identifier' ) == 'gallery' ) )
+                        {
+                            return $operatorValue = 'multiupload.tpl';
+                        }
+                    }
+                }
+                $operatorValue = 'default.tpl';
+            } break;
+            
+            case 'multiupload_file_types_string';
+            {
+                $availableFileTypes = array();
+                $availableFileTypesStr = '';
+                if( eZINI::instance( 'ezmultiupload.ini' )->hasGroup( 'FileTypeSettings_' . $operatorValue ) )
+                    $availableFileTypes = eZINI::instance( 'ezmultiupload.ini' )->variable( 'FileTypeSettings_' . $operatorValue, 'FileType' );
+                if ( !empty( $availableFileTypes ) )
+                    $availableFileTypesStr = implode( ';', $availableFileTypes );
+                $operatorValue = $availableFileTypesStr;
+            } break;
+            
+            case 'multiupload_file_types_string_from_attribute';
+            {
+                //@todo
+                $operatorValue = 'gallery';
+                $availableFileTypes = array();
+                $availableFileTypesStr = '';
+                if( eZINI::instance( 'ezmultiupload.ini' )->hasGroup( 'FileTypeSettings_' . $operatorValue ) )
+                    $availableFileTypes = eZINI::instance( 'ezmultiupload.ini' )->variable( 'FileTypeSettings_' . $operatorValue, 'FileType' );
+                if ( !empty( $availableFileTypes ) )
+                    $availableFileTypesStr = implode( ';', $availableFileTypes );
+                $operatorValue = $availableFileTypesStr;
+            } break;
+
+            case 'session_id':
+                $operatorValue = session_id();
+                break;
+
+            case 'session_name':
+                $operatorValue = session_name();
+                break;
+
+            case 'user_session_hash':
+                $operatorValue = '';
+                break;
+            
             case 'developer_warning':
             {
                 $res = false;

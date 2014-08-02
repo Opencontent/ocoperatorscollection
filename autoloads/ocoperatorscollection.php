@@ -137,7 +137,12 @@ class OCOperatorsCollection
         {
             case 'browse_template':
             {
-
+                $galleryIdentifiers = array( 'image', 'image2', 'galleria', 'gallery', 'immagini' );
+                if ( $ini->hasVariable( 'ImageRelations', 'ClassIdentifiers' ) )
+                {
+                    $galleryIdentifiers = $ini->variable( 'ImageRelations', 'ClassIdentifiers' );
+                }
+                
                 if ( $operatorValue instanceof eZContentBrowse
                     && $operatorValue->hasAttribute( 'type' ) && $operatorValue->attribute( 'type' ) == 'AddRelatedObjectListToDataType'
                     && $operatorValue->hasAttribute( 'action_name' ) )
@@ -150,10 +155,8 @@ class OCOperatorsCollection
                         if ( $contentClassAttribute instanceof eZContentClassAttribute
                              && ( $contentClassAttribute->attribute( 'data_type_string' ) == 'mugoobjectrelationlist'
                                   || $contentClassAttribute->attribute( 'data_type_string' ) == 'ezobjectrelationlist' )
-                             && ( $contentClassAttribute->attribute( 'identifier' ) == 'image'
-                                  || $contentClassAttribute->attribute( 'identifier' ) == 'image2'
-                                  || $contentClassAttribute->attribute( 'identifier' ) == 'galleria'
-                                  || $contentClassAttribute->attribute( 'identifier' ) == 'gallery' ) )
+                             && ( in_array( $contentClassAttribute->attribute( 'identifier' ), $galleryIdentifiers ) )
+                           )
                         {
                             return $operatorValue = 'multiupload.tpl';
                         }

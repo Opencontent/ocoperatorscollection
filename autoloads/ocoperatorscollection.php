@@ -19,6 +19,7 @@ class OCOperatorsCollection
         'appini',
         'include_cache', // @dev @todo non utilizzare
         'set_defaults',
+        'unset_defaults',
         'has_attribute', 'attribute',
         'editor_warning',
         'developer_warning',
@@ -98,6 +99,9 @@ class OCOperatorsCollection
                 'cache_keys'    => array( 'type'    => 'array', 	'required' => false,    'default' => false )
             ),
             'set_defaults' => array(
+                'variables'	    => array( 'type'	=> 'array', 	'required' => true )
+            ),
+            'unset_defaults' => array(
                 'variables'	    => array( 'type'	=> 'array', 	'required' => true )
             ),
             'has_attribute' => array(
@@ -259,6 +263,17 @@ class OCOperatorsCollection
                         $tpl->setVariable( $key, $value, $rootNamespace );
                     }
                 }
+            } break;
+
+            case 'unset_defaults':
+            {
+              foreach( $namedParameters['variables'] as $key)
+              {
+                if ( $tpl->hasVariable( $key, $rootNamespace ) )
+                {
+                  $tpl->unsetVariable( $key, $rootNamespace );
+                }
+              }
             } break;
 
             //@todo add cache!

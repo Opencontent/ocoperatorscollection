@@ -27,6 +27,7 @@ class OCOperatorsCollection
         'multiupload_file_types_string',
         'session_id', 'session_name', 'user_session_hash',
         'browse_template',        
+        'json_encode'
     );
 
     function OCOperatorsCollection()
@@ -139,6 +140,10 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {
+            case 'json_encode':
+            {
+                $operatorValue = json_encode( $operatorValue );
+            } break;            
             case 'browse_template':
             {
                 $galleryIdentifiers = array( 'image', 'image2', 'galleria', 'gallery', 'immagini' );

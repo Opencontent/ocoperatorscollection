@@ -146,10 +146,10 @@ class OCOperatorsCollection
             } break;            
             case 'browse_template':
             {
-                $galleryIdentifiers = array( 'image', 'image2', 'galleria', 'gallery', 'immagini' );
-                if ( $ini->hasVariable( 'ImageRelations', 'ClassIdentifiers' ) )
+                $identifiers = array( 'image', 'image2', 'galleria', 'gallery', 'immagini' );
+                if ( $ini->hasVariable( 'ObjectRelationsMultiupload', 'ClassAttributeIdentifiers' ) )
                 {
-                    $galleryIdentifiers = $ini->variable( 'ImageRelations', 'ClassIdentifiers' );
+                    $identifiers = $ini->variable( 'ObjectRelationsMultiupload', 'ClassAttributeIdentifiers' );
                 }
                 
                 if ( $operatorValue instanceof eZContentBrowse
@@ -164,7 +164,7 @@ class OCOperatorsCollection
                         if ( $contentClassAttribute instanceof eZContentClassAttribute
                              && ( $contentClassAttribute->attribute( 'data_type_string' ) == 'mugoobjectrelationlist'
                                   || $contentClassAttribute->attribute( 'data_type_string' ) == 'ezobjectrelationlist' )
-                             && ( in_array( $contentClassAttribute->attribute( 'identifier' ), $galleryIdentifiers ) )
+                             && ( in_array( $contentClassAttribute->attribute( 'identifier' ), $identifiers ) )
                            )
                         {
                             return $operatorValue = 'multiupload.tpl';
@@ -177,25 +177,55 @@ class OCOperatorsCollection
             case 'multiupload_file_types_string';
             {
                 $availableFileTypes = array();
-                $availableFileTypesStr = '';
+                $availableFileTypesString = '';
                 if( eZINI::instance( 'ezmultiupload.ini' )->hasGroup( 'FileTypeSettings_' . $operatorValue ) )
                     $availableFileTypes = eZINI::instance( 'ezmultiupload.ini' )->variable( 'FileTypeSettings_' . $operatorValue, 'FileType' );
                 if ( !empty( $availableFileTypes ) )
-                    $availableFileTypesStr = implode( ';', $availableFileTypes );
-                $operatorValue = $availableFileTypesStr;
+                    $availableFileTypesString = implode( ';', $availableFileTypes );
+                $operatorValue = $availableFileTypesString;
             } break;
             
             case 'multiupload_file_types_string_from_attribute';
             {
-                //@todo
-                $operatorValue = 'gallery';
-                $availableFileTypes = array();
-                $availableFileTypesStr = '';
-                if( eZINI::instance( 'ezmultiupload.ini' )->hasGroup( 'FileTypeSettings_' . $operatorValue ) )
-                    $availableFileTypes = eZINI::instance( 'ezmultiupload.ini' )->variable( 'FileTypeSettings_' . $operatorValue, 'FileType' );
-                if ( !empty( $availableFileTypes ) )
-                    $availableFileTypesStr = implode( ';', $availableFileTypes );
-                $operatorValue = $availableFileTypesStr;
+                $availableFileTypesString = '';
+                $attribute = $operatorValue;
+                if ( $attribute instanceof eZContentObjectAttribute )
+                {
+                    $identifiers = array();
+                    if ( $ini->hasVariable( 'ObjectRelationsMultiupload', 'ClassAttributeIdentifiers' ) )
+                    {
+                        $identifier = $attribute->attribute( 'contentclass_attribute_identifier' );
+                        $identifiers = $ini->variable( 'ObjectRelationsMultiupload', 'ClassAttributeIdentifiers' );
+                        if ( in_array( $identifier, $identifiers ) )
+                        {
+                            $availableFileTypes = array();
+                            $groups = $ini->group( 'ObjectRelationsMultiuploadFileTypesGroups' );
+                            foreach( $groups as $groupName => $attributeIdentifiers )
+                            {                                
+                                if ( in_array( $identifier, $attributeIdentifiers ) )
+                                {
+                                    $availableFileTypes = array_merge( $availableFileTypes, $ini->variable( 'ObjectRelationsMultiuploadFileTypes_' . $groupName, 'FileType' ) );
+                                }
+                            }
+                            $availableFileTypes = array_unique( $availableFileTypes );                            
+                            $availableFileTypesString = implode( ';', $availableFileTypes );
+                        }
+                    }
+                }
+                else
+                {
+                    $availableFileTypes = array();                    
+                    if( eZINI::instance( 'ezmultiupload.ini' )->hasGroup( 'FileTypeSettings_gallery' ) )
+                    {
+                        $availableFileTypes = eZINI::instance( 'ezmultiupload.ini' )->variable( 'FileTypeSettings_gallery', 'FileType' );
+                    }
+                    if ( !empty( $availableFileTypes ) )
+                    {
+                        $availableFileTypesString = implode( ';', $availableFileTypes );    
+                    }
+                }
+                                
+                $operatorValue = $availableFileTypesString;
             } break;
 
             case 'session_id':

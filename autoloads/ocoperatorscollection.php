@@ -200,28 +200,15 @@ class OCOperatorsCollection
                         {
                             $availableFileTypes = array();
                             $groups = $ini->group( 'ObjectRelationsMultiuploadFileTypesGroups' );
-                            foreach( $groups as $groupName => $attributeIdentifiers )
-                            {                                
-                                if ( in_array( $identifier, $attributeIdentifiers ) )
+                            foreach( $groups as $groupName => $fileType )
+                            {
+                                $groupIdentifiers =  $ini->variable( 'ObjectRelationsMultiuploadFileTypes_' . $groupName, 'Identifiers' );
+                                if ( in_array( $identifier, $groupIdentifiers ) )
                                 {
-                                    $availableFileTypes = array_merge( $availableFileTypes, $ini->variable( 'ObjectRelationsMultiuploadFileTypes_' . $groupName, 'FileType' ) );
+                                    $availableFileTypesString = $fileType;
                                 }
                             }
-                            $availableFileTypes = array_unique( $availableFileTypes );                            
-                            $availableFileTypesString = implode( ';', $availableFileTypes );
                         }
-                    }
-                }
-                else
-                {
-                    $availableFileTypes = array();                    
-                    if( eZINI::instance( 'ezmultiupload.ini' )->hasGroup( 'FileTypeSettings_gallery' ) )
-                    {
-                        $availableFileTypes = eZINI::instance( 'ezmultiupload.ini' )->variable( 'FileTypeSettings_gallery', 'FileType' );
-                    }
-                    if ( !empty( $availableFileTypes ) )
-                    {
-                        $availableFileTypesString = implode( ';', $availableFileTypes );    
                     }
                 }
                                 

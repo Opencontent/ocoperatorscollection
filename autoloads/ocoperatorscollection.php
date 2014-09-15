@@ -111,7 +111,7 @@ class OCOperatorsCollection
             'attribute' => array(
                 "show_values" => array( "type" => "string", "required" => false, "default" => "" ),
                 "max_val" => array( "type" => "numerical", "required" => false, "default" => 2 ),
-                "format" => array( "type" => "string", "required" => false, "default" => eZINI::instance( 'template.ini' )->variable( 'AttributeOperator', 'DefaultFormatter' ) )
+                "format" => array( "type" => "string", "required" => false, "default" => eZINI::instance( 'template.ini' )->hasVariable( 'AttributeOperator', 'DefaultFormatter' ) ? eZINI::instance( 'template.ini' )->variable( 'AttributeOperator', 'DefaultFormatter' ) : true )
             ),
             'editor_warning' => array(
                 'text'    => array( 'type'	=> 'string', 	'required' => true )
@@ -270,7 +270,20 @@ class OCOperatorsCollection
                 if ( $operatorName == 'attribute' && $namedParameters['show_values'] == 'show' )
                 {
                     $legacy = new eZTemplateAttributeOperator();
-                    $legacy->modify( $tpl, $operatorName, $operatorParameters, $rootNamespace, $currentNamespace, $operatorValue, $namedParameters, null );
+                    $parameters = $legacy->namedParameterList();
+                    $legacyParameters = array();
+                    foreach( array_keys( $parameters ) as $key )
+                    {
+                        switch( $key )
+                        {
+                            case "as_html":
+                                $legacyParameters[$key] = true;
+                                break;
+                            default:
+                                $legacyParameters[$key] = $namedParameters[$key];
+                        }
+                    }
+                    $legacy->modify( $tpl, $operatorName, $operatorParameters, $rootNamespace, $currentNamespace, $operatorValue, $legacyParameters, null );
                     return $operatorValue;
                 }
                 return $operatorValue = $this->hasContentObjectAttribute( $operatorValue, $namedParameters['show_values'] );

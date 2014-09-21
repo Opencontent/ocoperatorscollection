@@ -291,11 +291,14 @@ class OCOperatorsCollection
 
             case 'set_defaults':
             {
-                foreach( $namedParameters['variables'] as $key => $value )
+                if ( is_array( $namedParameters['variables'] ) )
                 {
-                    if ( !$tpl->hasVariable( $key, $rootNamespace ) )
+                    foreach( $namedParameters['variables'] as $key => $value )
                     {
-                        $tpl->setVariable( $key, $value, $rootNamespace );
+                        if ( !$tpl->hasVariable( $key, $rootNamespace ) )
+                        {
+                            $tpl->setVariable( $key, $value, $rootNamespace );
+                        }
                     }
                 }
             } break;

@@ -295,9 +295,9 @@ class OCOperatorsCollection
                 {
                     foreach( $namedParameters['variables'] as $key => $value )
                     {
-                        if ( !$tpl->hasVariable( $key, $rootNamespace ) )
+                        if ( !$tpl->hasVariable( $key, $currentNamespace ) )
                         {
-                            $tpl->setVariable( $key, $value, $rootNamespace );
+                            $tpl->setLocalVariable( $key, $value, $currentNamespace );
                         }
                     }
                 }
@@ -305,13 +305,16 @@ class OCOperatorsCollection
 
             case 'unset_defaults':
             {
-              foreach( $namedParameters['variables'] as $key)
-              {
-                if ( $tpl->hasVariable( $key, $rootNamespace ) )
+                foreach( $namedParameters['variables'] as $key)
                 {
-                  $tpl->unsetVariable( $key, $rootNamespace );
+                    $tpl->unsetLocalVariable( $key, $currentNamespace );
+
+//                    if ( isset( $tpl->Variables[$rootNamespace] ) &&
+//                         array_key_exists( $key, $tpl->Variables[$rootNamespace] ) )
+//                    {
+//                        $tpl->unsetVariable( $key, $rootNamespace );
+//                    }
                 }
-              }
             } break;
 
             //@todo add cache!

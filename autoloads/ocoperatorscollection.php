@@ -27,7 +27,9 @@ class OCOperatorsCollection
         'multiupload_file_types_string',
         'session_id', 'session_name', 'user_session_hash',
         'browse_template',        
-        'json_encode'
+        'json_encode',
+        'children_class_identifiers',
+        'fa_class_icon'
     );
 
     function OCOperatorsCollection()
@@ -118,7 +120,10 @@ class OCOperatorsCollection
             ),
             'developer_warning' => array(
                 'text'    => array( 'type'	=> 'string', 	'required' => true )
-            )
+            ),
+            'fa_class_icon' => array(
+                'fallback'    => array( 'type'	=> 'string', 	'required' => false, 'default' => '' )
+            ),
         );
     }
 
@@ -140,6 +145,45 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {
+            case 'fa_class_icon':
+            {
+                $faIconIni = eZINI::instance( 'fa_icons.ini' );
+                $node = $operatorValue;
+                $data = $namedParameters['fallback'] != '' ? $namedParameters['fallback'] : $faIconIni->variable( 'ClassIcons', '_fallback' );
+                if ( $node instanceof eZContentObjectTreeNode )
+                {
+                    if ( $faIconIni->hasVariable( 'ClassIcons', $node->attribute( 'class_identifier' ) ) )
+                    {
+                        $data = $faIconIni->variable( 'ClassIcons', $node->attribute( 'class_identifier' ) );
+                    }
+                }
+                $operatorValue = $data;
+            } break;
+
+            case 'children_class_identifiers':
+            {
+                $node = $operatorValue;
+                $data = array();
+                if ( $node instanceof eZContentObjectTreeNode )
+                {
+                    $search = eZFunctionHandler::execute(
+                        'ezfind',
+                        'search',
+                        array(
+                            'limit' => 1,
+                            'filter' => array( '-meta_id_si:', $node->attribute( 'contentobject_id' ) ),
+                            'facet', array( array( 'field' => 'meta_class_identifier_ms', 'name' => 'class_identifier', 'limit' => 200 ) )
+                        )
+                    );
+                    if ( isset( $search['SearchExtras'] ) )
+                    {
+                        $facets = $search['SearchExtras']->attribute( 'facet_fields' );
+                        $data = $facets[0]['nameList'];
+                    }
+                }
+                $operatorValue = $data;
+            } break;
+
             case 'json_encode':
             {
                 $operatorValue = json_encode( $operatorValue );

@@ -29,7 +29,8 @@ class OCOperatorsCollection
         'browse_template',        
         'json_encode',
         'children_class_identifiers',
-        'fa_class_icon'
+        'fa_class_icon',
+        'gmap_static_image'
     );
 
     function OCOperatorsCollection()
@@ -127,6 +128,10 @@ class OCOperatorsCollection
             'fa_class_icon' => array(
                 'fallback'    => array( 'type'	=> 'string', 	'required' => false, 'default' => '' )
             ),
+            'gmap_static_image' => array(
+                'parameters' => array( 'type' => 'array', 'required' => true ),
+                'attribute' => array( 'type' => 'object', 'required' => true )
+            )
         );
     }
 
@@ -148,6 +153,19 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {
+            case 'gmap_static_image':
+            {
+                try
+                {                    
+                    $cacheFileNames = array(); //@todo
+                    $operatorValue = OCOperatorsCollectionsTools::gmapStaticImage( $namedParameters['parameters'], $namedParameters['attribute'], $cacheFileNames );
+                }
+                catch( Exception $e )
+                {
+                    eZDebug::writeError( $e->getMessage(), 'gmap_static_image' );
+                }
+            } break;
+            
             case 'fa_class_icon':
             {
                 $faIconIni = eZINI::instance( 'fa_icons.ini' );
@@ -321,6 +339,10 @@ class OCOperatorsCollection
                 {
                     $legacy = new eZTemplateAttributeOperator();
                     $parameters = $legacy->namedParameterList();
+                    if ( isset( $parameters['attribute'] ) )
+                    {
+                        $parameters = $parameters['attribute'];
+                    }
                     $legacyParameters = array();
                     foreach( array_keys( $parameters ) as $key )
                     {
@@ -330,7 +352,7 @@ class OCOperatorsCollection
                                 $legacyParameters[$key] = true;
                                 break;
                             default:
-                                $legacyParameters[$key] = $namedParameters[$key];
+                                $legacyParameters[$key] = isset( $namedParameters[$key] ) ? $namedParameters[$key] : false;
                         }
                     }
                     $legacy->modify( $tpl, $operatorName, $operatorParameters, $rootNamespace, $currentNamespace, $operatorValue, $legacyParameters, null );

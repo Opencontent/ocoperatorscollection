@@ -5,5 +5,6 @@ ExtensionRepositories[]=ocoperatorscollection
 
 ModuleList[]=subsite
 ModuleList[]=add
+ModuleList[]=switch
 
 */ ?>

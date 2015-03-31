@@ -239,6 +239,11 @@ class OCOperatorsCollection
                         }
                     }
                 }
+                elseif ( $operatorValue instanceof eZContentBrowse
+                         && $operatorValue->hasAttribute( 'action_name' ) && $operatorValue->attribute( 'action_name' ) == 'MultiUploadBrowse' )
+                {
+                    return $operatorValue = 'multiupload.tpl';
+                }
                 $operatorValue = 'default.tpl';
             } break;
             

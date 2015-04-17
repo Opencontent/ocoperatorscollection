@@ -30,7 +30,8 @@ class OCOperatorsCollection
         'json_encode',
         'children_class_identifiers',
         'fa_class_icon',
-        'gmap_static_image'
+        'gmap_static_image',
+        'parse_link_href'
     );
 
     function OCOperatorsCollection()
@@ -153,6 +154,45 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {
+            case 'parse_link_href':
+            {                
+                $href = $operatorValue;
+                $hrefParts = explode( ':', $href );                
+                $hrefFirst = array_shift( $hrefParts );
+                if ( !in_array( $hrefFirst, array( 'http', 'https', 'file', 'mailto', 'ftp' ) ) )
+                {
+                   if ( !empty( $hrefFirst ) )
+                   {
+                        $nodeID = eZURLAliasML::fetchNodeIDByPath( '/' . $hrefFirst );                        
+                        if ( $nodeID )
+                        {
+                            $contentNode = eZContentObjectTreeNode::fetch( $nodeID );
+                            if ( $contentNode instanceof eZContentObjectTreeNode )
+                            {
+                                $keyArray = array(                                    
+                                    array( 'node', $contentNode->attribute( 'node_id' ) ),
+                                    array( 'object', $contentNode->attribute( 'contentobject_id' ) ),
+                                    array( 'class_identifier', $contentNode->attribute( 'class_identifier' ) ),
+                                    array( 'class_group', $contentNode->attribute( 'object' )->attribute( 'content_class' )->attribute( 'match_ingroup_id_list' ) ),                                    
+                                );
+                                $tpl = eZTemplate::factory();                                
+                                $tpl->setVariable( 'node', $contentNode );
+                                $tpl->setVariable( 'object', $contentNode->attribute( 'object' ) );
+                                $tpl->setVariable( 'original_href', $href );
+                                $res = eZTemplateDesignResource::instance();
+                                $res->setKeys( $keyArray );        
+                                $result = trim( $tpl->fetch( 'design:link/href.tpl' ) );
+                                if ( !empty( $result ) )
+                                {
+                                    $href = $result;
+                                }
+                            }
+                        }
+                    }
+                }
+                return $operatorValue = $href;
+            } break;
+            
             case 'gmap_static_image':
             {
                 try

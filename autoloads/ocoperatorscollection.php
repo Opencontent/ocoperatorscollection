@@ -156,7 +156,7 @@ class OCOperatorsCollection
         {
             case 'parse_link_href':
             {                
-                $href = $operatorValue;
+                $href = $operatorValue;                
                 $hrefParts = explode( ':', $href );                
                 $hrefFirst = array_shift( $hrefParts );
                 if ( !in_array( $hrefFirst, array( 'http', 'https', 'file', 'mailto', 'ftp' ) ) )
@@ -175,12 +175,20 @@ class OCOperatorsCollection
                                     array( 'class_identifier', $contentNode->attribute( 'class_identifier' ) ),
                                     array( 'class_group', $contentNode->attribute( 'object' )->attribute( 'content_class' )->attribute( 'match_ingroup_id_list' ) ),                                    
                                 );
-                                $tpl = eZTemplate::factory();                                
+                                $tpl = new eZTemplate();
+                                $ini = eZINI::instance();                                
+                                $autoLoadPathList   = $ini->variable( 'TemplateSettings', 'AutoloadPathList' );
+                                $extensionAutoloadPath = $ini->variable( 'TemplateSettings', 'ExtensionAutoloadPath' );
+                                $extensionPathList     = eZExtension::expandedPathList( $extensionAutoloadPath, 'autoloads/' );
+                                $autoLoadPathList = array_unique( array_merge( $autoLoadPathList, $extensionPathList ) );
+                                $tpl->setAutoloadPathList( $autoLoadPathList );
+                                $tpl->autoload();
                                 $tpl->setVariable( 'node', $contentNode );
                                 $tpl->setVariable( 'object', $contentNode->attribute( 'object' ) );
                                 $tpl->setVariable( 'original_href', $href );
-                                $res = eZTemplateDesignResource::instance();
-                                $res->setKeys( $keyArray );        
+                                $res = new eZTemplateDesignResource();
+                                $res->setKeys( $keyArray );
+                                $tpl->registerResource( $res );
                                 $result = trim( $tpl->fetch( 'design:link/href.tpl' ) );
                                 if ( !empty( $result ) )
                                 {

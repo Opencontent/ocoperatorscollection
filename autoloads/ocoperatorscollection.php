@@ -121,6 +121,9 @@ class OCOperatorsCollection
             'developer_warning' => array(
                 'text'    => array( 'type'	=> 'string', 	'required' => true )
             ),
+            'children_class_identifiers' => array(
+                'exclude'    => array( 'type'	=> 'array', 	'required' => false, 'default' => array() )
+            ),
             'fa_class_icon' => array(
                 'fallback'    => array( 'type'	=> 'string', 	'required' => false, 'default' => '' )
             ),
@@ -170,17 +173,20 @@ class OCOperatorsCollection
                         'ezfind',
                         'search',
                         array(
+                            'subtree_array' => array( $node->attribute( 'node_id' ) ),
                             'limit' => 1,
-                            'filter' => array( '-meta_id_si:', $node->attribute( 'contentobject_id' ) ),
-                            'facet', array( array( 'field' => 'meta_class_identifier_ms', 'name' => 'class_identifier', 'limit' => 200 ) )
+                            'as_objects' => false,
+                            'filter' => array( '-meta_id_si:' . $node->attribute( 'contentobject_id' ) ),
+                            'facet' => array( array( 'field' => 'meta_class_identifier_ms', 'name' => 'class_identifier', 'limit' => 200 ) )
                         )
-                    );
+                    );                    
                     if ( isset( $search['SearchExtras'] ) )
                     {
                         $facets = $search['SearchExtras']->attribute( 'facet_fields' );
-                        $data = $facets[0]['nameList'];
+                        $data = array_diff( array_values( $facets[0]['nameList'] ), $namedParameters['exclude'] );
                     }
                 }
+                //eZDebug::writeNotice( $data, 'children_class_identifiers'  );
                 $operatorValue = $data;
             } break;
 

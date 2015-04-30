@@ -563,70 +563,16 @@ class OCOperatorsCollection
             case 'has_abstract':
             case 'abstract':
             {
-                $has_content = false;
-                $text = false;
-                $node = $namedParameters['node'];
-                $strlenFunc = function_exists( 'mb_strlen' ) ? 'mb_strlen' : 'strlen';
-
-                if ( !$node )
-                    $node = $operatorValue;
-
-                if ( is_numeric( $node ) )
+                $node = $operatorValue;
+                if ( !$node instanceof eZContentObjectTreeNode && isset( $namedParameters['node'] ) )
                 {
-                    $node = eZContentObjectTreeNode::fetch( $node );
-                }
-
-                if ( $node instanceof eZContentObjectTreeNode )
-                {
-                    if ( $node->hasAttribute( 'highlight' ) )
+                    $node = $namedParameters['node'];
+                    if ( is_numeric( $node ) )
                     {
-                        $text = $node->attribute( 'highlight' );
-                        $text = str_replace( '&amp;nbsp;', ' ', $text );
-                        $text = str_replace( '&nbsp;', ' ', $text );
-
-                        if ( $strlenFunc( $text ) > 0 )
-                        {
-                            $has_content = true;
-                        }
-                    }
-
-                    if ( !$has_content )
-                    {
-                        $attributes = $ini->hasVariable( 'Abstract', 'Attributes' ) ? $ini->variable( 'Abstract', 'Attributes' ) : array();
-                        if ( !empty( $attributes ) )
-                        {
-                            $dataMap = $node->dataMap();
-                            foreach ( $attributes as $attr )
-                            {
-                                if ( isset( $dataMap[$attr] ) )
-                                {
-                                    if ( $dataMap[$attr]->hasContent() )
-                                    {
-
-                                        $tpl = eZTemplate::factory();
-                                        $tpl->setVariable( 'attribute', $dataMap[$attr] );
-                                        $designPath = "design:content/datatype/view/" . $dataMap[$attr]->attribute( 'data_type_string' ) . ".tpl";
-                                        $text = $tpl->fetch( $designPath );
-                                        $text = str_replace( '&nbsp;', ' ', $text );
-
-                                        if ( $strlenFunc( strip_tags( $text ) ) > 0 )
-                                        {
-                                            $has_content = true;
-                                        }
-
-                                        break;
-                                    }
-                                }
-
-                            }
-                        }
+                        $node = eZContentObjectTreeNode::fetch( $node );
                     }
                 }
-
-                if ( $operatorName == 'has_abstract' )
-                    return $operatorValue = $has_content;
-                else
-                    return $operatorValue = $text;
+                return $operatorValue = $this->getAbstract( $node, $operatorName == 'has_abstract');
 
             } break;
 
@@ -910,6 +856,74 @@ class OCOperatorsCollection
 
         return false;
     }
+
+    /**
+     * @param eZContentObjectTreeNode $node
+     * @param bool $check
+     *
+     * @return bool|string
+     */
+    public function getAbstract( $node, $check = false )
+    {
+        $has_content = false;
+        $text = false;
+        $strLenFunc = function_exists( 'mb_strlen' ) ? 'mb_strlen' : 'strlen';
+        $ini = eZINI::instance( 'ocoperatorscollection.ini' );
+
+        if ( $node instanceof eZContentObjectTreeNode )
+        {
+            if ( $node->hasAttribute( 'highlight' ) )
+            {
+                $text = $node->attribute( 'highlight' );
+                $text = str_replace( '&amp;nbsp;', ' ', $text );
+                $text = str_replace( '&nbsp;', ' ', $text );
+
+                if ( $strLenFunc( $text ) > 0 )
+                {
+                    $has_content = true;
+                }
+            }
+
+            if ( !$has_content )
+            {
+                $attributes = $ini->hasVariable( 'Abstract', 'Attributes' ) ? $ini->variable( 'Abstract', 'Attributes' ) : array();
+                if ( !empty( $attributes ) )
+                {
+                    /** @var eZContentObjectAttribute[] $dataMap */
+                    $dataMap = $node->dataMap();
+                    foreach ( $attributes as $attr )
+                    {
+                        if ( isset( $dataMap[$attr] ) )
+                        {
+                            if ( $dataMap[$attr]->hasContent() )
+                            {
+
+                                $tpl = eZTemplate::factory();
+                                $tpl->setVariable( 'attribute', $dataMap[$attr] );
+                                $designPath = "design:content/datatype/view/" . $dataMap[$attr]->attribute( 'data_type_string' ) . ".tpl";
+                                $text = $tpl->fetch( $designPath );
+                                $text = str_replace( '&nbsp;', ' ', $text );
+
+                                if ( $strLenFunc( strip_tags( $text ) ) > 0 )
+                                {
+                                    $has_content = true;
+                                }
+
+                                break;
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+
+        if ( $check )
+            return $has_content;
+        else
+            return $text;
+    }
+
 
     /**
      * @param eZContentObjectTreeNode|eZContentObject $object

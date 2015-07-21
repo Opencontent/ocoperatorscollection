@@ -18,6 +18,23 @@ $data = array(
     'newValue' => false
 );
 
+function normalizeValue( $newValue, $currentValue, eZContentObjectAttribute $attribute )
+{
+    switch( $attribute->attribute( 'data_type_string' ) )
+    {
+        case 'eztime':
+        {
+            $parts = explode( ':', $newValue );
+            if ( count( $parts ) == 2 )
+            {
+                $parts[] = '00'; //seconds
+                $newValue = implode( ':', $parts );
+            }
+        }
+    }
+    return $newValue;
+}
+
 if ( $object instanceof eZContentObject )
 {
     if ( $object->attribute( 'can_edit' ) )
@@ -30,6 +47,7 @@ if ( $object instanceof eZContentObject )
             if ( $attribute instanceof eZContentObjectAttribute )
             {
                 $currentValue = $attribute->toString();
+                $newValue = normalizeValue( $newValue, $currentValue, $attribute );
                 if ( $newValue != $currentValue )
                 {
                     if ( $createNewVersion )

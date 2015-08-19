@@ -969,6 +969,12 @@ class OCOperatorsCollection
                         case 'ezcomcomments':
                             return $dataMap[$identifier];
                             break;
+                        case 'ezboolean':
+                            if( $dataMap[$identifier]->attribute( 'data_int' ) == 1 )
+                            {
+                                return $dataMap[$identifier];
+                            }
+                            break;
                         default:
                             if ( $dataMap[$identifier]->attribute( 'has_content' ) )
                             {

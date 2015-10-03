@@ -30,6 +30,8 @@ class OCOperatorsCollection
         'json_encode',
         'children_class_identifiers',
         'fa_class_icon',
+        'fa_object_icon',
+        'fa_node_icon',
         'gmap_static_image',
         'parse_link_href'
     );
@@ -129,6 +131,12 @@ class OCOperatorsCollection
             'fa_class_icon' => array(
                 'fallback'    => array( 'type'	=> 'string', 	'required' => false, 'default' => '' )
             ),
+            'fa_object_icon' => array(
+                'fallback'    => array( 'type'	=> 'string', 	'required' => false, 'default' => '' )
+            ),
+            'fa_node_icon' => array(
+                'fallback'    => array( 'type'	=> 'string', 	'required' => false, 'default' => '' )
+            ),
             'gmap_static_image' => array(
                 'parameters' => array( 'type' => 'array', 'required' => true ),
                 'attribute' => array( 'type' => 'object', 'required' => true )
@@ -224,6 +232,50 @@ class OCOperatorsCollection
                     if ( $faIconIni->hasVariable( 'ClassIcons', $node->attribute( 'class_identifier' ) ) )
                     {
                         $data = $faIconIni->variable( 'ClassIcons', $node->attribute( 'class_identifier' ) );
+                    }
+                }
+                $operatorValue = $data;
+            } break;
+
+            case 'fa_object_icon':
+            {
+                $faIconIni = eZINI::instance( 'fa_icons.ini' );
+                $object = $operatorValue;
+                $data = $namedParameters['fallback'] != '' ? $namedParameters['fallback'] : '';
+                if ( $object instanceof eZContentObject )
+                {
+                    if ( $faIconIni->hasVariable( 'ObjectIcons', $object->attribute( 'id' ) ) )
+                    {
+                        $data = $faIconIni->variable( 'ObjectIcons', $object->attribute( 'id' ) );
+                    }
+                }
+                else
+                {
+                    if ( $faIconIni->hasVariable( 'ObjectIcons', $node ) )
+                    {
+                        $data = $faIconIni->variable( 'ObjectIcons', $node );
+                    }
+                }
+                $operatorValue = $data;
+            } break;
+
+            case 'fa_node_icon':
+            {
+                $faIconIni = eZINI::instance( 'fa_icons.ini' );
+                $node = $operatorValue;
+                $data = $namedParameters['fallback'] != '' ? $namedParameters['fallback'] : '';
+                if ( $node instanceof eZContentObjectTreeNode )
+                {
+                    if ( $faIconIni->hasVariable( 'NodeIcons', $node->attribute( 'node_id' ) ) )
+                    {
+                        $data = $faIconIni->variable( 'NodeIcons', $node->attribute( 'node_id' ) );
+                    }
+                }
+                else
+                {
+                    if ( $faIconIni->hasVariable( 'NodeIcons', $node ) )
+                    {
+                        $data = $faIconIni->variable( 'NodeIcons', $node );
                     }
                 }
                 $operatorValue = $data;

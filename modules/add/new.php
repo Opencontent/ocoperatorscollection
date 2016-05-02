@@ -43,8 +43,9 @@ elseif ( $http->hasGetVariable( 'from' ) )
     $object = eZContentObject::fetch( intval( $from ) );
     try
     {
-        $copy = OCOperatorsCollectionsTools::copyObject( $object );
-        $module->redirectTo( 'content/edit/' . $copy->attribute( 'id' ) . '/' . $copy->attribute( 'current_version' ) . $queryString );
+        $languageCode = eZINI::instance()->variable( 'RegionalSettings', 'Locale' );
+	$copy = OCOperatorsCollectionsTools::copyObject( $object );
+        $module->redirectTo( 'content/edit/' . $copy->attribute( 'id' ) . '/' . $copy->attribute( 'current_version' ) . '/' . $languageCode . $queryString );
         return;
     }
     catch( InvalidArgumentException $e )

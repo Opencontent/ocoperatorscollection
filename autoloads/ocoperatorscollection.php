@@ -33,7 +33,8 @@ class OCOperatorsCollection
         'fa_object_icon',
         'fa_node_icon',
         'gmap_static_image',
-        'parse_link_href'
+        'parse_link_href',
+        'smart_override'
     );
 
     function OCOperatorsCollection()
@@ -140,6 +141,10 @@ class OCOperatorsCollection
             'gmap_static_image' => array(
                 'parameters' => array( 'type' => 'array', 'required' => true ),
                 'attribute' => array( 'type' => 'object', 'required' => true )
+            ),
+            'smart_override' => array(
+                'identifier' => array('type' => 'string','required' => true),
+                'view' => array('type' => 'string','required' => true),
             )
         );
     }
@@ -161,7 +166,15 @@ class OCOperatorsCollection
         $appini = eZINI::instance( 'app.ini' );
 
         switch ( $operatorName )
-        {
+        {            
+            case 'smart_override':
+            {
+                $identifier = $namedParameters['identifier'];
+                $view = $namedParameters['view'];
+                $node = $operatorValue;
+                $operatorValue = $this->findSmartTemplate( $identifier, $view, $node );
+            } break;
+            
             case 'parse_link_href':
             {                
                 $href = $operatorValue;                
@@ -1518,6 +1531,22 @@ class OCOperatorsCollection
         $newtext = str_replace("<    !--","< !--",$newtext);
 
         return $newtext;
+    }
+    
+    protected function findSmartTemplate( $identifier, $view, $node )
+    {
+        $defaultTemplateUri = "design:{$identifier}/{$view}/_default.tpl";
+        $result = false;
+        if ( $node instanceof eZContentObjectTreeNode || $node instanceof eZContentObject )
+        {
+            $currentErrorReporting = error_reporting();
+            error_reporting( 0 );            
+            $templateUri = "design:{$identifier}/{$view}/{$node->attribute( 'class_identifier' )}.tpl";
+            $tpl = eZTemplate::factory();
+            $result = $tpl->loadURIRoot( $templateUri, false, $extraParameters );
+            error_reporting( $currentErrorReporting );
+        }
+        return $result ? $templateUri : $defaultTemplateUri;
     }
 
 }

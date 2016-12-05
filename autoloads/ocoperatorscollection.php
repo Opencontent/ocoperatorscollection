@@ -34,7 +34,8 @@ class OCOperatorsCollection
         'fa_node_icon',
         'gmap_static_image',
         'parse_link_href',
-        'smart_override'
+        'smart_override',
+        'related_attribute_objects'
     );
 
     function OCOperatorsCollection()
@@ -145,7 +146,10 @@ class OCOperatorsCollection
             'smart_override' => array(
                 'identifier' => array('type' => 'string','required' => true),
                 'view' => array('type' => 'string','required' => true),
-            )
+            ),
+            'related_attribute_objects' => array(
+                'identifier' => array('type' => 'string','required' => true)
+            ),            
         );
     }
 
@@ -167,6 +171,22 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {            
+            case 'related_attribute_objects':
+            {
+                $object = $operatorValue;
+                $identifier = $namedParameters['identifier'];
+                $dataMap = $object instanceof eZContentObject || $object instanceof eZContentObjectTreeNode ? $object->attribute('data_map') : array();
+                $data = array();
+                if (isset($dataMap[$identifier])){
+                    $ids = $dataMap[$identifier] instanceof eZContentObjectAttribute ? explode('-', $dataMap[$identifier]->toString()) : array();
+                    if (!empty($ids)){
+                        $data = eZContentObject::fetchList( true, array( "id" => array( $ids ) ) );
+                    }
+                }
+                $operatorValue = $data;
+            }
+                break;
+            
             case 'smart_override':
             {
                 $identifier = $namedParameters['identifier'];

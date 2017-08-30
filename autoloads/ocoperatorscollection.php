@@ -35,7 +35,8 @@ class OCOperatorsCollection
         'gmap_static_image',
         'parse_link_href',
         'smart_override',
-        'related_attribute_objects'
+        'related_attribute_objects',
+        'no_index_if_needed'
     );
 
     function OCOperatorsCollection()
@@ -171,6 +172,20 @@ class OCOperatorsCollection
 
         switch ( $operatorName )
         {            
+            case 'no_index_if_needed':
+            {
+                $siteUrl = eZINI::instance()->variable( 'SiteSettings', 'SiteURL' );
+                if (eZINI::instance()->hasVariable('SiteSettings', 'MetaNoIndex')) {
+                    $addNoIndex = eZINI::instance()->variable('SiteSettings', 'MetaNoIndex') == 'enabled';
+                }else{
+                    $addNoIndex = strpos($siteUrl, 'opencontent') !== false;
+                }
+                if ($addNoIndex){
+                    return $operatorValue = '<!-- ' . $siteUrl . ' --><meta name="robots" content="NOINDEX,NOFOLLOW" />';
+                }
+
+            } break;
+
             case 'related_attribute_objects':
             {
                 $object = $operatorValue;

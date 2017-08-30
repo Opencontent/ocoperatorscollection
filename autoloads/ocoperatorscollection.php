@@ -177,6 +177,8 @@ class OCOperatorsCollection
                 $siteUrl = eZINI::instance()->variable( 'SiteSettings', 'SiteURL' );
                 if (eZINI::instance()->hasVariable('SiteSettings', 'MetaNoIndex')) {
                     $addNoIndex = eZINI::instance()->variable('SiteSettings', 'MetaNoIndex') == 'enabled';
+                }elseif (eZINI::instance('openpa.ini')->hasVariable('SEO', 'EnableRobots')) {
+                    $addNoIndex = eZINI::instance()->variable('SEO', 'EnableRobots') == 'disabled';
                 }else{
                     $addNoIndex = strpos($siteUrl, 'opencontent') !== false;
                 }

@@ -10,7 +10,7 @@ class OCOperatorsCollection
         'has_abstract', 'abstract',
         'oc_shorten',
         'cookieset', 'cookieget', 'check_and_set_cookies',
-        'checkbrowser', 'is_deprecated_browser',
+        'checkbrowser', 'is_deprecated_browser', 'is_mobile',
         'slugize',
         'to_query_string',
         'sort_nodes',
@@ -947,6 +947,13 @@ class OCOperatorsCollection
                     $operatorValue = true;
                 }
                 $operatorValue = false;
+            } break;
+
+            case 'is_mobile':
+            {
+                $mobileDeviceDetect = new ezpMobileDeviceDetect( ezpMobileDeviceDetectFilter::getFilter() );
+                $mobileDeviceDetect->process();
+                $operatorValue = $mobileDeviceDetect->isMobileDevice() ;
             } break;
 
             case 'slugize':

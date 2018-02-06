@@ -586,7 +586,8 @@ class OCOperatorsCollection
                             'ClassFilterArray' => $ini->variable( 'GlobalLayout', 'Classes' ),
                             'Depth' => 1,
                             'DepthOperator' => 'eq',
-                            'AsObject' => false
+                            'AsObject' => false,
+                            'Limitation' => array() //workaround per eZContentObjectTreeNode::subTreeMultiPaths che non considera le temp_table
                         );
                     }
                 }

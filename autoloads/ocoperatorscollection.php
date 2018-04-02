@@ -39,7 +39,7 @@ class OCOperatorsCollection
         'no_index_if_needed'
     );
 
-    function OCOperatorsCollection()
+    function __construct()
     {
     }
 

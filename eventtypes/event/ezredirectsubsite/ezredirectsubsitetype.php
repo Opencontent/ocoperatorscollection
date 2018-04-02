@@ -4,9 +4,9 @@ class eZRedirectSubisteType extends eZWorkflowEventType
 {
     const WORKFLOW_TYPE_STRING = "ezredirectsubsite";
     
-	function eZRedirectSubisteType()
+	function __construct()
     {
-        $this->eZWorkflowEventType( eZRedirectSubisteType::WORKFLOW_TYPE_STRING, ezpI18n::tr( 'opencontent', 'Redirect' ) );
+        parent::__construct( eZRedirectSubisteType::WORKFLOW_TYPE_STRING, ezpI18n::tr( 'opencontent', 'Redirect' ) );
         $this->setTriggerTypes( array( 'content' => array( 'read' => array( 'before' ) ) ) );
     }
 

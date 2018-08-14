@@ -927,7 +927,7 @@ class OCOperatorsCollection
 
             case 'checkbrowser':
             {
-                @require( 'extension/ocoperatorscollection/lib/browser_detection.php' );
+                @require_once( 'extension/ocoperatorscollection/lib/browser_detection.php' );
                 if ( function_exists( 'browser_detection' ) )
                 {
                     $full = browser_detection( 'full_assoc', 2 );

@@ -467,7 +467,8 @@ class OCOperatorsCollection
             {
                 $res = false;
                 $user = eZUser::currentUser();
-                if ( $user->hasAccessTo( 'content', 'dashboard' ) )
+                $accessResult = $user->hasAccessTo( 'content', 'dashboard' );
+                if ( $accessResult['accessWord'] != 'no' )
                 {
                     $res = '<div class="editor-warning alert alert-warning"><strong>Avviso per l\'editor</strong>: ' . $namedParameters['text'] . '</div>';
                 }
